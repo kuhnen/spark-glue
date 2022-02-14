@@ -1,5 +1,8 @@
 ARG java_image_tag=8-jre-slim
-FROM python:3.7-slim-buster
+FROM python:3.10.2-slim-buster
+#FROM ubuntu:18.04
+FROM openjdk:8
+
 
 # Build options
 ARG hive_version=2.3.7
@@ -12,13 +15,17 @@ ENV HADOOP_VERSION=${hadoop_version}
 
 WORKDIR /
 
+RUN apt-get update
+RUN apt-get install -y patch wget python3-setuptools
+#RUN apt-get install -y wget
+#RUN apt-get install -y python3-setuptools
 # JDK repo
-RUN echo "deb http://ftp.us.debian.org/debian sid main" >> /etc/apt/sources.list \
-  &&  apt-get update \
-  &&  mkdir -p /usr/share/man/man1
+#RUN echo "deb http://ftp.us.debian.org/debian sid main" >> /etc/apt/sources.list \
+#  &&  apt-get update \
+#  &&  mkdir -p /usr/share/man/man1
 
-# install deps
-RUN apt-get install -y git curl wget openjdk-8-jdk patch && rm -rf /var/cache/apt/*
+
+#RUN apt-get install -y git curl wget openjdk-8-jdk patch && rm -rf /var/cache/apt/*
 
 # maven
 ENV MAVEN_VERSION=3.6.3
