@@ -3,7 +3,7 @@
 set -e
 HADOOP_VERSION=3.3.0
 HADOOP_FILE_NAME=hadoop-${HADOOP_VERSION}.tar.gz
-SPARK_FILE_NAME=spark-3.1.2-bin-hadoop-provided-glue.tgz
+SPARK_FILE_NAME=spark-3.4.1-bin-hadoop-provided-glue.tgz
 
 if [ -f "$SPARK_FILE_NAME" ]; then
   echo "$SPARK_FILE_NAME already exists"
@@ -37,4 +37,4 @@ echo "tar -xzvf $SPARK_FILE_NAME"
 #echo "cd ${SPARK_FILE_NAME%"$TAR_SUFFIX"}"
 echo "cd dist/"
 echo "./bin/spark-sql"
-echo "Enjoy it. Order some bierradi and relax"
+echo "Enjoy it. Order some beer and and relax"

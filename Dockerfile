@@ -6,7 +6,7 @@ FROM openjdk:8
 
 # Build options
 ARG hive_version=2.3.7
-ARG spark_version=3.1.2
+ARG spark_version=3.4.1
 ARG hadoop_version=3.3.0
 
 ENV SPARK_VERSION=${spark_version}
@@ -26,37 +26,48 @@ RUN apt-get install -y patch wget python3-setuptools
 
 
 #RUN apt-get install -y git curl wget openjdk-8-jdk patch && rm -rf /var/cache/apt/*
-
+#https://dlcdn.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz
 # maven
-ENV MAVEN_VERSION=3.6.3
+ENV MAVEN_VERSION=3.9.4
 ENV PATH=/opt/apache-maven-$MAVEN_VERSION/bin:$PATH
 ENV MAVEN_HOME /opt/apache-maven-${MAVEN_VERSION}
 
 RUN cd /opt \
-  &&  wget https://downloads.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
+  &&  wget https://dlcdn.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
   &&  tar zxvf /opt/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
   &&  rm apache-maven-${MAVEN_VERSION}-bin.tar.gz
 
 COPY ./maven-settings.xml ${MAVEN_HOME}/conf/settings.xml
 
 WORKDIR /opt
-#BUILD HIVE
-ADD https://github.com/apache/hive/archive/rel/release-${hive_version}.tar.gz hive.tar.gz
-RUN mkdir hive && tar xzf hive.tar.gz --strip-components=1 -C hive
-WORKDIR /opt/hive
-ADD https://issues.apache.org/jira/secure/attachment/12958418/HIVE-12679.branch-2.3.patch hive.patch
-#### Build patched hive
-RUN patch -p0 <hive.patch &&\
-  mvn  clean install -DskipTests
-
 ## Glue support
-WORKDIR /opt
-RUN git clone https://github.com/bbenzikry/aws-glue-data-catalog-client-for-apache-hive-metastore catalog
+RUN git clone --branch branch-3.4.0 https://github.com/awslabs/aws-glue-data-catalog-client-for-apache-hive-metastore catalog
+
+#BUILD HIVE
+RUN git clone https://github.com/apache/hive.git
+RUN cp catalog/branch_3.1.patch hive
+
+WORKDIR /opt/hive
+RUN git checkout tags/rel/release-3.1.3 -b branch-3.1
+RUN git apply -3 branch_3.1.patch
+RUN mvn clean install -DskipTests
+RUN git add .
+RUN git reset --hard
+RUN git checkout branch-2.3
+ADD https://issues.apache.org/jira/secure/attachment/12958418/HIVE-12679.branch-2.3.patch hive.patch
+RUN patch -p0 <hive.patch
+RUN mvn clean install -DskipTests
 ## Glue support
 
 ### Build glue hive client jars
 WORKDIR /opt/catalog
-RUN mvn clean package -DskipTests -pl -aws-glue-datacatalog-hive2-client
+RUN mvn clean install -DskipTests
+RUN cd aws-glue-datacatalog-spark-client && mvn clean package -DskipTests
+RUN cd aws-glue-datacatalog-hive3-client && mvn clean package -DskipTests
+
+#RUN mvn clean package -DskipTests -pl -aws-glue-datacatalog-hive3-client
+#FOr hive we need to add the seetings xml.
+#HHow to solve the Could not find artifact jdk.tools:jdk.tools:jar:1.7 issue?
 ### Build glue hive client jars
 
 #install hadoop
@@ -72,27 +83,21 @@ ENV SPARK_DIST_CLASSPATH=$HADOOP_HOME/$HADOOP_WITH_VERSION/etc/hadoop/*:$HADOOP_
 #BUILD SPARK
 WORKDIR /opt
 RUN git clone https://github.com/apache/spark.git spark_clone
-##cd spark_clone
 WORKDIR /opt/spark_clone
 
 RUN git checkout "tags/v${SPARK_VERSION}" -b "v${SPARK_VERSION}"
-#RUN ./dev/make-distribution.sh --name spark-patched --pip -Pkubernetes -Phive -Phive-thriftserver -Phadoop-provided -Dhadoop.version="${HADOOP_VERSION}"
 RUN ./dev/make-distribution.sh --name spark-patched --pip -Phive -Phive-thriftserver -Phadoop-provided -Dhadoop.version="${HADOOP_VERSION}"
 
 COPY conf/* ./dist/conf
 RUN find /opt/catalog -name "*.jar" | grep -Ev "test|original" | xargs -I{} cp {} ./dist/jars
 ENV DIRNAME=spark-${SPARK_VERSION}-bin-hadoop-provided-glue
+
 #BUILD SPARK
-
-
 RUN echo "Uploading to DIRNAME $DIRNAME"
 RUN echo $SPARK_DIST_CLASSPATH
 
 WORKDIR /opt/spark_clone
 
 ARG DIRNAME=spark-${SPARK_VERSION}-bin-hadoop-provided-glue
-#RUN echo "Uploading to DIRNAME $DIRNAME"
-#RUN mv /mnt/ramdisk/spark_clone/dist "/$DIRNAME"
-#cd /
 RUN echo "Creating archive $DIRNAME.tgz"
 RUN tar -cvzf "$DIRNAME.tgz" dist

@@ -1,24 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
 
+  <!-- This is the recommended settings.xml for development of Hitachi Vantara projects. -->
+
+  <!--
+  If your wish to mirror everything through pentaho-public's repo uncomment bellow. Not recommended
+  for external developers.
+  -->
+  <!--
+  <mirrors>
+    <mirror>
+      <id>pentaho-public</id>
+      <url>https://repo.orl.eng.hitachivantara.com/artifactory/pnt-mvn/</url>
+      <mirrorOf>*</mirrorOf>
+    </mirror>
+  </mirrors>
+  -->
+
+  <!--
+  Don't forget to add setting-security.xml so that the password get's decrypted
+  -->
+  <servers>
+    <server>
+      <id>pentaho-public</id>
+      <username>devreaduser</username>
+      <password>{zIMyJWfHKfoHiBJAVsAgW4E5BcJzR+nhTtgPy0J+/rs=}</password>
+    </server>
+  </servers>
+
+  <!--
+  You might want to tweak the 'updatePolicy' configuration to fit your need on having updated snapshots and
+  releases. Our recommendation is to set it to 'never' and run maven with the '-U' flag when needed.
+  -->
   <profiles>
     <profile>
-      <id>main</id>
+      <id>pentaho</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
       <repositories>
         <repository>
-          <id>nexus.pentaho.org</id>
-          <name>nexus</name>
-          <url>
-          https://public.nexus.pentaho.org/repository/proxy-public-3rd-party-release</url>
+          <id>pentaho-public</id>
+          <name>Pentaho Public</name>
+          <url>https://repo.orl.eng.hitachivantara.com/artifactory/pnt-mvn/</url>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+          </snapshots>
         </repository>
       </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>pentaho-public</id>
+          <name>Pentaho Public</name>
+          <url>https://repo.orl.eng.hitachivantara.com/artifactory/pnt-mvn/</url>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>always</updatePolicy>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
     </profile>
   </profiles>
-  <activeProfiles>
-    <activeProfile>main</activeProfile>
-  </activeProfiles>
+
+  <!-- this lets you call plugins from these groups in their short form -->
+  <pluginGroups>
+    <pluginGroup>org.pentaho.maven.plugins</pluginGroup>
+    <pluginGroup>com.pentaho.maven.plugins</pluginGroup>
+    <pluginGroup>com.github.spotbugs</pluginGroup>
+  </pluginGroups>
 </settings>
