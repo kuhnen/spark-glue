@@ -1,9 +1,9 @@
 #!/bin/bash
 #set -ex
 set -e
-HADOOP_VERSION=3.3.0
+HADOOP_VERSION=3.3.4
 HADOOP_FILE_NAME=hadoop-${HADOOP_VERSION}.tar.gz
-SPARK_FILE_NAME=spark-3.4.1-bin-hadoop-provided-glue.tgz
+SPARK_FILE_NAME=spark-3.5.1-bin-hadoop-provided-glue.tgz
 
 if [ -f "$SPARK_FILE_NAME" ]; then
   echo "$SPARK_FILE_NAME already exists"
